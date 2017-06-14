@@ -1,4 +1,14 @@
+/**
+ * SELINUX-RC project
+ * (C) Ivan Agarkov, 2017
+ */
 package api
+
+import (
+	"net/http"
+	"github.com/julienschmidt/httprouter"
+)
+
 
 import (
 	"github.com/julienschmidt/httprouter"

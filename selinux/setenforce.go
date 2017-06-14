@@ -1,3 +1,7 @@
+/**
+ * SELINUX-RC project
+ * (C) Ivan Agarkov, 2017
+ */
 package selinux
 
 import ()

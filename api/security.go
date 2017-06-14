@@ -1,3 +1,7 @@
+/**
+ * SELINUX-RC project
+ * (C) Ivan Agarkov, 2017
+ */
 package api
 
 import (
@@ -7,9 +11,10 @@ import (
 	"log"
 	"errors"
 	"net/http"
+	"io/ioutil"
 )
 
-const root = `-----BEGIN CERTIFICATE-----
+var root string = `-----BEGIN CERTIFICATE-----
 MIIFADCCAuigAwIBAgIJAOadPkS4424aMA0GCSqGSIb3DQEBCwUAMBUxEzARBgNV
 BAMMCnNlbGludXguY2EwHhcNMTcwNjE0MTQxMDAxWhcNNDQxMDMwMTQxMDAxWjAV
 MRMwEQYDVQQDDApzZWxpbnV4LmNhMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIIC
@@ -39,7 +44,7 @@ I+YLidN2sQJ2pNar+ixG8Kfg1MeGHDz8mCEcJ6TGR1+kZfVEFdPDz7a8TEjazc7S
 Elt+56uMERW8BAvY8BFI3qlAOvoNRjzl14LjpQQ6xQD4ArVo
 -----END CERTIFICATE-----`
 
-const rootca = 720575940379279360
+var rootca int = 720575940379279360 // as example
 
 type int64slice []int64
 
@@ -55,6 +60,17 @@ func (a int64slice) Less(i, j int) bool {
 
 var roots *x509.CertPool
 var veropts *x509.VerifyOptions
+
+func LoadRootCA(filename string) error {
+	_root, e := ioutil.ReadFile(filename)
+	if e == nil {
+		root = string(_root)
+		rootca = checksum()
+		return security_init()
+	} else {
+		return e
+	}
+}
 
 func checksum() int {
 
