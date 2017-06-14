@@ -1,12 +1,16 @@
+/**
+ * SELINUX-RC project
+ * (C) Ivan Agarkov, 2017
+ */
 package main
 
 import (
-	"./api"
 	"os"
 	"errors"
 	"io/ioutil"
 	"log"
 	"strconv"
+	"github.com/kreon/selinux-rc/api"
 )
 
 func main() {

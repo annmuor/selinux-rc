@@ -9,12 +9,6 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-
-import (
-	"github.com/julienschmidt/httprouter"
-	"net/http"
-)
-
 func InitRouter() http.Handler {
 	r := httprouter.New()
 	r.GET("/info", getinfo)

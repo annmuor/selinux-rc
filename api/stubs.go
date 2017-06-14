@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"github.com/julienschmidt/httprouter"
 	"encoding/json"
-	"../selinux"
 	"errors"
+	"github.com/kreon/selinux-rc/selinux"
 )
 
 type selinux_info struct {
