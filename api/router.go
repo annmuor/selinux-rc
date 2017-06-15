@@ -5,9 +5,23 @@
 package api
 
 import (
-	"net/http"
+	"../plugins"
 	"github.com/julienschmidt/httprouter"
+	"net/http"
 )
+
+type MyOwnRouter struct {
+	router http.Handler
+}
+
+func (h *MyOwnRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if plugins.RequestIntercept(w, r) {
+		return
+	} else {
+		h.router.ServeHTTP(w, r)
+	}
+
+}
 
 func InitRouter() http.Handler {
 	r := httprouter.New()
@@ -18,5 +32,7 @@ func InitRouter() http.Handler {
 	r.PUT("/setenforce/0", setpermissive)
 	r.PUT("/setenforce/1", setenforce)
 	r.POST("/restorecon/*path", restorecon)
-	return r
+	or := new(MyOwnRouter)
+	or.router = r
+	return or
 }
