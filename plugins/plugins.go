@@ -18,13 +18,13 @@ const (
 
 var currentConfig map[string]string
 
-var loadedPlugins map[string]Plugin
+var loadedPlugins map[string]SELinuxPlugin
 
 func loadDefaultConfig() {
 	currentConfig[ENABLED] = ""
 }
 
-type Plugin interface {
+type SELinuxPlugin interface {
 	RequestIntercept(w http.ResponseWriter, r *http.Request) bool
 }
 
@@ -54,7 +54,7 @@ func LoadConfig(filename string) {
 
 func RequestIntercept(w http.ResponseWriter, r *http.Request) bool {
 	if loadedPlugins == nil {
-		loadedPlugins = make(map[string]Plugin)
+		loadedPlugins = make(map[string]SELinuxPlugin)
 		enabled := strings.Split(currentConfig[ENABLED], ",")
 		defer func() {
 			if e := recover(); e != nil {

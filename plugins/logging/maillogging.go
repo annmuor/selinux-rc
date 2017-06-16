@@ -1,7 +1,6 @@
 package logging
 
 import (
-	".."
 	"fmt"
 	"log"
 	"net/http"
@@ -28,18 +27,18 @@ selinux-rc maillogging plugin
 `
 )
 
-type Plugin struct {
+type MailPlugin struct {
 	filter string
 	format string
 	logger *log.Logger
 	mailer *mailer
 }
 
-func Init(config map[string]string) plugins.Plugin {
+func Init(config map[string]string) *MailPlugin {
 	if config[MAIL_ADDRESS] == "" && config[LOGFILE] == "" {
 		panic("Failed to init logging plugin: you must set either mail_address or logfile")
 	}
-	p := new(Plugin)
+	p := new(MailPlugin)
 	if config[LOGFILE] != "" {
 		if s, e := os.OpenFile(config[LOGFILE], os.O_APPEND|os.O_CREATE, 0644); e == nil {
 			p.logger = log.New(s, "selinux-rc", log.LstdFlags|log.LUTC)
@@ -63,7 +62,10 @@ func Init(config map[string]string) plugins.Plugin {
 	return p
 }
 
-func (l *Plugin) RequestIntercept(w http.ResponseWriter, r *http.Request) bool {
+func (l *MailPlugin) RequestIntercept(w http.ResponseWriter, r *http.Request) bool {
+	if l.mailer != nil {
+		l.mailer.log(l.format, l.filter, r)
+	}
 	return false
 }
 

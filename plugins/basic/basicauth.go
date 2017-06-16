@@ -1,7 +1,6 @@
 package basic
 
 import (
-	".."
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -13,7 +12,7 @@ const (
 	PASSWORD_FILE = "basic_passwordfile"
 )
 
-type Plugin struct {
+type BasicPlugin struct {
 	password_file string
 }
 
@@ -22,7 +21,7 @@ password file format
 user:password
 ok
 */
-func (l *Plugin) RequestIntercept(w http.ResponseWriter, r *http.Request) bool {
+func (l *BasicPlugin) RequestIntercept(w http.ResponseWriter, r *http.Request) bool {
 	username, password, ok := r.BasicAuth()
 	if ok { // check if ok
 		ok = false
@@ -44,7 +43,7 @@ func (l *Plugin) RequestIntercept(w http.ResponseWriter, r *http.Request) bool {
 	return false
 }
 
-func Init(config map[string]string) plugins.Plugin {
+func Init(config map[string]string) *BasicPlugin {
 	if config[PASSWORD_FILE] != "" {
 		if f, e := os.Open(config[PASSWORD_FILE]); e == nil {
 			f.Close()
@@ -52,7 +51,7 @@ func Init(config map[string]string) plugins.Plugin {
 			panic("Can't load basic plugin! basic_passwordfile is invalid")
 		}
 	}
-	p := new(Plugin)
+	p := new(BasicPlugin)
 	p.password_file = config[PASSWORD_FILE]
 	return p
 }
