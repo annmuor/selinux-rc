@@ -17,7 +17,7 @@ const (
 
 var currentConfig map[string]string
 
-var loadedPlugins map[string]SELinuxPlugin
+var loadedPlugins []SELinuxPlugin
 
 func loadDefaultConfig() {
 	currentConfig[ENABLED] = ""
@@ -62,7 +62,7 @@ func has(x []string, y string) bool {
 
 func RequestIntercept(w http.ResponseWriter, r *http.Request) bool {
 	if loadedPlugins == nil {
-		loadedPlugins = make(map[string]SELinuxPlugin)
+		loadedPlugins = make([]SELinuxPlugin, 0)
 		enabled := strings.Split(currentConfig[ENABLED], ",")
 		defer func() {
 			if e := recover(); e != nil {
@@ -70,26 +70,19 @@ func RequestIntercept(w http.ResponseWriter, r *http.Request) bool {
 			}
 		}() // init can panic if something went wrong
 		if has(enabled, "ldap") {
-			if loadedPlugins["ldap"] == nil {
-				loadedPlugins["ldap"] = ldap.Init(currentConfig)
-			}
+			loadedPlugins = append(loadedPlugins, ldap.Init(currentConfig))
 		}
 		if has(enabled, "basic") {
-			if loadedPlugins["basic"] == nil {
-				loadedPlugins["basic"] = basic.Init(currentConfig)
-			}
+			loadedPlugins = append(loadedPlugins, basic.Init(currentConfig))
 		}
 		if has(enabled, "logging") {
-			if loadedPlugins["logging"] == nil {
-				loadedPlugins["logging"] = logging.Init(currentConfig)
-			}
+			loadedPlugins = append(loadedPlugins, logging.Init(currentConfig))
 		}
 	}
-	intercept := false
 	for _, v := range loadedPlugins {
 		if v.RequestIntercept(w, r) {
-			intercept = true
+			return true
 		}
 	}
-	return intercept
+	return false
 }
