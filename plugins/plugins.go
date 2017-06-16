@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"sort"
 	"strings"
 )
 
@@ -52,6 +51,15 @@ func LoadConfig(filename string) {
 	}
 }
 
+func has(x []string, y string) bool {
+	for _, i := range x {
+		if i == y {
+			return true
+		}
+	}
+	return false
+}
+
 func RequestIntercept(w http.ResponseWriter, r *http.Request) bool {
 	if loadedPlugins == nil {
 		loadedPlugins = make(map[string]SELinuxPlugin)
@@ -61,17 +69,17 @@ func RequestIntercept(w http.ResponseWriter, r *http.Request) bool {
 				log.Fatal(e)
 			}
 		}() // init can panic if something went wrong
-		if sort.SearchStrings(enabled, "ldap") {
+		if has(enabled, "ldap") {
 			if loadedPlugins["ldap"] == nil {
 				loadedPlugins["ldap"] = ldap.Init(currentConfig)
 			}
 		}
-		if sort.SearchStrings(enabled, "basic") {
+		if has(enabled, "basic") {
 			if loadedPlugins["basic"] == nil {
 				loadedPlugins["basic"] = basic.Init(currentConfig)
 			}
 		}
-		if sort.SearchStrings(enabled, "logging") {
+		if has(enabled, "logging") {
 			if loadedPlugins["logging"] == nil {
 				loadedPlugins["logging"] = logging.Init(currentConfig)
 			}

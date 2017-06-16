@@ -62,9 +62,39 @@ func Init(config map[string]string) *MailPlugin {
 	return p
 }
 
+func (l *MailPlugin) messageFormatAndFilter(r *http.Request) (string, bool) {
+	get_username := func() string {
+		u, _, o := r.BasicAuth();
+		if o {
+			return u
+		} else {
+			return "-"
+		}
+	}
+	get_cert := func() string {
+		cs := r.TLS.PeerCertificates
+		for _, c := range cs {
+			return c.SerialNumber.Text(16)
+		}
+		return "-"
+	}
+	message := l.format
+	message = strings.Replace(message, "{METHOD}", "", -1)
+	message = strings.Replace(message, "{IP}", r.RemoteAddr, -1)
+	message = strings.Replace(message, "{USERNAME}", get_username(), -1)
+	message = strings.Replace(message, "{CERTIFICATE}", get_cert(), -1)
+	message = strings.Replace(message, "{URL}", r.RequestURI, -1)
+	o, _ := regexp.MatchString(l.filter, message)
+	return message, o
+}
 func (l *MailPlugin) RequestIntercept(w http.ResponseWriter, r *http.Request) bool {
-	if l.mailer != nil {
-		l.mailer.log(l.format, l.filter, r)
+	if m, o := l.messageFormatAndFilter(r); o {
+		if l.mailer != nil {
+			go l.mailer.log(m)
+		}
+		if l.logger != nil {
+			l.logger.Println(m)
+		}
 	}
 	return false
 }
@@ -86,35 +116,12 @@ func newMailer(server string, port int, from, to string) *mailer {
 	return m
 }
 
-func (m *mailer) log(format string, filter string, r *http.Request) {
-	get_username := func() string {
-		u, _, o := r.BasicAuth();
-		if o {
-			return u
-		} else {
-			return "-"
-		}
-	}
-	get_cert := func() string {
-		cs := r.TLS.PeerCertificates
-		for _, c := range cs {
-			return c.SerialNumber.Text(16)
-		}
-		return "-"
-	}
-	message := format
-	message = strings.Replace(message, "{METHOD}", "", -1)
-	message = strings.Replace(message, "{IP}", r.RemoteAddr, -1)
-	message = strings.Replace(message, "{USERNAME}", get_username(), -1)
-	message = strings.Replace(message, "{CERTIFICATE}", get_cert(), -1)
-	message = strings.Replace(message, "{URL}", r.RequestURI, -1)
-	if o, _ := regexp.MatchString(filter, message); o {
-		h, _ := os.Hostname()
-		msg := fmt.Sprintf(TEMPLATE, m.from, m.to, time.Now().String(), h, message)
-		if e := smtp.SendMail(fmt.Sprintf("%s:%d", m.server, m.port), nil, m.from,
-			[]string(m.to), []byte(msg)); e != nil {
-			log.Printf("Error while sending mail to %s:%d: %s", m.server, m.port, e.Error())
-		}
+func (m *mailer) log(message string) {
+	h, _ := os.Hostname()
+	msg := fmt.Sprintf(TEMPLATE, m.from, m.to, time.Now().String(), h, message)
+	if e := smtp.SendMail(fmt.Sprintf("%s:%d", m.server, m.port), nil, m.from,
+		[]string{m.to}, []byte(msg)); e != nil {
+		log.Printf("Error while sending mail to %s:%d: %s", m.server, m.port, e.Error())
 	}
 
 }
