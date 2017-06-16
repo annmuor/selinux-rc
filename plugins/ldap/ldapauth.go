@@ -7,25 +7,34 @@ import (
 	"fmt"
 	"crypto/tls"
 	"log"
+	"strings"
 )
 
 const (
-	BASE = "ldap_base"
-	HOST = "ldap_host"
-	PORT = "ldap_port"
-	SSL  = "ldap_use_ssl"
+	BASE   = "ldap_base"
+	HOST   = "ldap_host"
+	PORT   = "ldap_port"
+	SSL    = "ldap_use_ssl"
+	DOMAIN = "ldap_domain"
 )
 
 type LdapPlugin struct {
-	base string
-	host string
-	port int
-	ssl  bool
+	base   string
+	host   string
+	domain string
+	port   int
+	ssl    bool
 }
 
 func (l *LdapPlugin) RequestIntercept(w http.ResponseWriter, r *http.Request) bool {
 	username, password, ok := r.BasicAuth()
 	if ok {
+		if l.domain != "" {
+			_d := fmt.Sprintf("%s\\", l.domain)
+			if !strings.HasPrefix(_d, username) {
+				username = fmt.Sprintf("%s%s", _d, username)
+			}
+		}
 		ok = false
 		var conn *ldap.Conn
 		var e error
@@ -70,5 +79,6 @@ func Init(config map[string]string) *LdapPlugin {
 	l.port = port
 	l.host = config[HOST]
 	l.ssl = ssl
+	l.domain = config[DOMAIN]
 	return l
 }
