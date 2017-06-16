@@ -1,6 +1,9 @@
 {
-  "plugins_enabled":"basic,logging",
+  "plugins_enabled":"basic,ldap,logging",
   "logging_mail_address":"root",
   "logging_logfile":"selinux-rc.log",
   "basic_passwordfile":"selinux.passwd"
+  "ldap_host":"192.168.1.1",
+  "ldap_port":"636",
+  "ldap_domain":"COMPANY"
 }
