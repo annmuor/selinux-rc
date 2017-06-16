@@ -6,6 +6,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
+	"regexp"
+	"net/smtp"
+	"time"
 )
 
 const (
@@ -13,6 +17,15 @@ const (
 	FILTER       = "logging_filter"
 	FORMAT       = "logging_format"
 	LOGFILE      = "logging_logfile"
+	TEMPLATE     = `From: %s
+To: %s
+Date: %s
+Subject: SELinux was altered at %s
+
+%s
+--
+selinux-rc maillogging plugin
+`
 )
 
 type Plugin struct {
@@ -71,6 +84,35 @@ func newMailer(server string, port int, from, to string) *mailer {
 	return m
 }
 
-func (m *mailer) log(r *http.Request) {
+func (m *mailer) log(format string, filter string, r *http.Request) {
+	get_username := func() string {
+		u, _, o := r.BasicAuth();
+		if o {
+			return u
+		} else {
+			return "-"
+		}
+	}
+	get_cert := func() string {
+		cs := r.TLS.PeerCertificates
+		for _, c := range cs {
+			return c.SerialNumber.Text(16)
+		}
+		return "-"
+	}
+	message := format
+	message = strings.Replace(message, "{METHOD}", "", -1)
+	message = strings.Replace(message, "{IP}", r.RemoteAddr, -1)
+	message = strings.Replace(message, "{USERNAME}", get_username(), -1)
+	message = strings.Replace(message, "{CERTIFICATE}", get_cert(), -1)
+	message = strings.Replace(message, "{URL}", r.RequestURI, -1)
+	if o, _ := regexp.MatchString(filter, message); o {
+		h, _ := os.Hostname()
+		msg := fmt.Sprintf(TEMPLATE, m.from, m.to, time.Now().String(), h, message)
+		if e := smtp.SendMail(fmt.Sprintf("%s:%d", m.server, m.port), nil, m.from,
+			[]string(m.to), []byte(msg)); e != nil {
+			log.Printf("Error while sending mail to %s:%d: %s", m.server, m.port, e.Error())
+		}
+	}
 
 }
