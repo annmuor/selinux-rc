@@ -79,7 +79,7 @@ func (l *MailPlugin) messageFormatAndFilter(r *http.Request) (string, bool) {
 		return "-"
 	}
 	message := l.format
-	message = strings.Replace(message, "{METHOD}", "", -1)
+	message = strings.Replace(message, "{METHOD}", r.Method, -1)
 	message = strings.Replace(message, "{IP}", r.RemoteAddr, -1)
 	message = strings.Replace(message, "{USERNAME}", get_username(), -1)
 	message = strings.Replace(message, "{CERTIFICATE}", get_cert(), -1)

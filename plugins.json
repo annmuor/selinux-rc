@@ -1,0 +1,6 @@
+{
+  "plugins_enabled":"basic,logging",
+  "logging_mail_address":"root",
+  "logging_logfile":"selinux-rc.log",
+  "basic_passwordfile":"selinux.passwd"
+}

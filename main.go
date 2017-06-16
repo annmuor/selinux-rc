@@ -9,39 +9,35 @@ import (
 	"errors"
 	"io/ioutil"
 	"log"
-	"strconv"
-	"github.com/kreon/selinux-rc/api"
+	"./api"
 	"./plugins"
 	"flag"
 )
 
 func main() {
-	config := flag.String("-c", "", "json config for plugins data")
+	config := flag.String("conf", "plugins.json", "json config for plugins data")
+	port := flag.Int("port", 8443, "port to listen on")
+	ca := flag.String("ca", "example/pki/ca.crt", "CA PEM certificate file")
+	scert := flag.String("cert", "example/pki/server.crt", "Server PEM certificate file")
+	skey := flag.String("key", "example/pki/server.key", "Server RSA key file")
 	flag.Parse()
-	// args: port ca.crt server.crt server.key
-	if flag.NArg() < 4 {
-		usage();
-	}
-	port, e := strconv.Atoi(flag.Arg(0))
-	if e != nil {
-		die("port", e)
-	}
-	if port < 1 || port > 65535 {
+
+	if *port < 1 || *port > 65535 {
 		die("port", errors.New("Port must be between 1 and 65535"))
 	}
-	if e := api.LoadRootCA(flag.Arg(1)); e != nil {
+	if e := api.LoadRootCA(*ca); e != nil {
 		die("rootca", e)
 	}
-	if s_cert, e := ioutil.ReadFile(flag.Arg(2)); e != nil {
+	if s_cert, e := ioutil.ReadFile(*scert); e != nil {
 		die("servercert", e)
 	} else {
-		if s_key, e := ioutil.ReadFile(flag.Arg(3)); e != nil {
+		if s_key, e := ioutil.ReadFile(*skey); e != nil {
 			die("serverkey", e)
 		} else {
 			if *config != "" {
 				plugins.LoadConfig(*config)
 			}
-			die("start", api.StartServer(port, s_cert, s_key))
+			die("start", api.StartServer(*port, s_cert, s_key))
 		}
 	}
 }
